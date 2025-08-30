@@ -129,22 +129,25 @@ fun DrawingSurface() {
                                     }
 
                                     MotionEvent.ACTION_UP -> {
-                                        val pointerIndex = event.actionIndex
-                                        val pointerId = event.getPointerId(pointerIndex)
-                                        check(pointerId == currentPointerId)
-                                        val currentStrokeId = checkNotNull(currentStrokeId)
-                                        finishStroke(
-                                            event, pointerId, currentStrokeId
-                                        )
+                                        val pointerId = event.getPointerId(event.actionIndex)
+                                        currentStrokeId?.let { currentStrokeId ->
+                                            if (pointerId == currentPointerId) {
+                                                finishStroke(
+                                                    event, pointerId, currentStrokeId
+                                                )
+                                            }
+                                        }
                                         view.performClick()
                                         true
                                     }
 
                                     MotionEvent.ACTION_CANCEL -> {
                                         val pointerId = event.getPointerId(event.actionIndex)
-                                        check(pointerId == currentPointerId)
-                                        val currentStrokeId = checkNotNull(currentStrokeId)
-                                        cancelStroke(currentStrokeId, event)
+                                        currentStrokeId?.let { currentStrokeId ->
+                                            if (pointerId == currentPointerId) {
+                                                cancelStroke(currentStrokeId, event)
+                                            }
+                                        }
                                         true
                                     }
 
