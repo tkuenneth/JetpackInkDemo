@@ -99,77 +99,79 @@ fun DrawingSurface() {
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
-                MotionEventPredictor.newInstance(this@apply).apply {
-                    setOnTouchListener { view, event ->
-                        record(event)
-                        predict().let { predictedEvent ->
-                            try {
-                                when (event.actionMasked) {
-                                    MotionEvent.ACTION_DOWN -> {
-                                        view.requestUnbufferedDispatch(event)
-                                        val pointerIndex = event.actionIndex
-                                        val pointerId = event.getPointerId(pointerIndex)
+                val predictor = MotionEventPredictor.newInstance(this)
+                setOnTouchListener { view, event ->
+                    predictor.record(event)
+                    predictor.predict().let { predictedEvent ->
+                        try {
+                            when (event.actionMasked) {
+                                MotionEvent.ACTION_DOWN -> {
+                                    view.requestUnbufferedDispatch(event)
+                                    event.getPointerId(event.actionIndex).let { pointerId ->
                                         currentPointerId = pointerId
                                         currentStrokeId = startStroke(
                                             event = event, pointerId = pointerId, brush = brush
                                         )
-                                        true
                                     }
+                                    true
+                                }
 
-                                    MotionEvent.ACTION_MOVE -> {
-                                        val pointerId = checkNotNull(currentPointerId)
-                                        val strokeId = checkNotNull(currentStrokeId)
-                                        for (pointerIndex in 0 until event.pointerCount) {
-                                            if (event.getPointerId(pointerIndex) != pointerId) continue
-                                            addToStroke(
-                                                event, pointerId, strokeId, predictedEvent
-                                            )
-                                        }
-                                        true
-                                    }
-
-                                    MotionEvent.ACTION_UP -> {
-                                        val pointerId = event.getPointerId(event.actionIndex)
-                                        currentStrokeId?.let { currentStrokeId ->
-                                            if (pointerId == currentPointerId) {
-                                                finishStroke(
-                                                    event, pointerId, currentStrokeId
+                                MotionEvent.ACTION_MOVE -> {
+                                    currentPointerId?.let { pointerId ->
+                                        currentStrokeId?.let { strokeId ->
+                                            for (pointerIndex in 0 until event.pointerCount) {
+                                                if (event.getPointerId(pointerIndex) != pointerId) continue
+                                                addToStroke(
+                                                    event, pointerId, strokeId, predictedEvent
                                                 )
                                             }
                                         }
-                                        view.performClick()
-                                        true
                                     }
-
-                                    MotionEvent.ACTION_CANCEL -> {
-                                        val pointerId = event.getPointerId(event.actionIndex)
-                                        currentStrokeId?.let { currentStrokeId ->
-                                            if (pointerId == currentPointerId) {
-                                                cancelStroke(currentStrokeId, event)
-                                            }
-                                        }
-                                        true
-                                    }
-
-                                    else -> false
+                                    true
                                 }
-                            } finally {
-                                predictedEvent?.recycle()
+
+                                MotionEvent.ACTION_UP -> {
+                                    val pointerId = event.getPointerId(event.actionIndex)
+                                    currentStrokeId?.let { currentStrokeId ->
+                                        if (pointerId == currentPointerId) {
+                                            finishStroke(
+                                                event, pointerId, currentStrokeId
+                                            )
+                                        }
+                                    }
+                                    view.performClick()
+                                    true
+                                }
+
+                                MotionEvent.ACTION_CANCEL -> {
+                                    val pointerId = event.getPointerId(event.actionIndex)
+                                    currentStrokeId?.let { currentStrokeId ->
+                                        if (pointerId == currentPointerId) {
+                                            cancelStroke(currentStrokeId, event)
+                                        }
+                                    }
+                                    true
+                                }
+
+                                else -> false
                             }
+                        } finally {
+                            predictedEvent?.recycle()
                         }
                     }
-                    eagerInit()
                 }
+                eagerInit()
             }
         },
     )
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasTransform = Matrix()
         drawContext.canvas.nativeCanvas.concat(canvasTransform)
-        val canvas = drawContext.canvas.nativeCanvas
         finishedStrokes.values.forEach { stroke ->
             canvasStrokeRenderer.draw(
-                stroke = stroke, canvas = canvas, strokeToScreenTransform = canvasTransform
+                stroke = stroke,
+                canvas = drawContext.canvas.nativeCanvas,
+                strokeToScreenTransform = canvasTransform
             )
         }
     }
