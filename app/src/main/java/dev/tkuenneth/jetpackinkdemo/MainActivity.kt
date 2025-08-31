@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -121,14 +120,13 @@ fun DrawingSurface(
     modifier: Modifier = Modifier,
     addStrokes: (Map<InProgressStrokeId, Stroke>) -> Unit
 ) {
-    val context = LocalContext.current
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
     var currentPointerId by remember { mutableStateOf<Int?>(null) }
     var currentStrokeId by remember { mutableStateOf<InProgressStrokeId?>(null) }
     AndroidView(
         modifier = modifier.fillMaxSize(),
-        factory = {
+        factory = { context ->
             InProgressStrokesView(context).apply {
                 addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
