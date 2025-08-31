@@ -12,7 +12,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,22 +61,43 @@ class MainActivity : ComponentActivity(), InProgressStrokesFinishedListener {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
+    val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
     Scaffold(
-        modifier = Modifier.fillMaxSize(), topBar = {
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) })
-        }) { innerPadding ->
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(
+                        enabled = finishedStrokes.isNotEmpty(),
+                        onClick = { finishedStrokes.clear() }) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear)
+                        )
+                    }
+                },
+            )
+        }
+    ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            DrawingSurface()
+            DrawingSurface(
+                finishedStrokes = finishedStrokes.values
+            ) { strokes ->
+                finishedStrokes.putAll(strokes)
+            }
         }
     }
 }
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
-fun DrawingSurface() {
+fun DrawingSurface(
+    finishedStrokes: Collection<Stroke>,
+    modifier: Modifier = Modifier,
+    addStrokes: (Map<InProgressStrokeId, Stroke>) -> Unit
+) {
     val context = LocalContext.current
-    val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     var currentPointerId by remember { mutableStateOf<Int?>(null) }
     var currentStrokeId by remember { mutableStateOf<InProgressStrokeId?>(null) }
@@ -86,12 +111,12 @@ fun DrawingSurface() {
         )
     }
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         factory = {
             InProgressStrokesView(context).apply {
                 addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                        finishedStrokes.putAll(strokes)
+                        addStrokes(strokes)
                         removeFinishedStrokes(strokes.keys)
                     }
                 })
@@ -164,10 +189,21 @@ fun DrawingSurface() {
             }
         },
     )
+    FinishedStrokes(
+        finishedStrokes = finishedStrokes,
+        canvasStrokeRenderer = canvasStrokeRenderer
+    )
+}
+
+@Composable
+fun FinishedStrokes(
+    finishedStrokes: Collection<Stroke>,
+    canvasStrokeRenderer: CanvasStrokeRenderer
+) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasTransform = Matrix()
         drawContext.canvas.nativeCanvas.concat(canvasTransform)
-        finishedStrokes.values.forEach { stroke ->
+        finishedStrokes.forEach { stroke ->
             canvasStrokeRenderer.draw(
                 stroke = stroke,
                 canvas = drawContext.canvas.nativeCanvas,

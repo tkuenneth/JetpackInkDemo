@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Jetpack Ink Demo</string>
+    <string name="clear">Clear</string>
 </resources>
