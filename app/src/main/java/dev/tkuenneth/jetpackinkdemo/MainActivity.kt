@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -122,6 +123,7 @@ fun DrawingSurface(
 ) {
     val context = LocalContext.current
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+    val latestBrush by rememberUpdatedState(brush)
     var currentPointerId by remember { mutableStateOf<Int?>(null) }
     var currentStrokeId by remember { mutableStateOf<InProgressStrokeId?>(null) }
     AndroidView(
@@ -151,7 +153,7 @@ fun DrawingSurface(
                                         currentStrokeId = startStroke(
                                             event = event,
                                             pointerId = pointerId,
-                                            brush = brush
+                                            brush = latestBrush
                                         )
                                     }
                                     true
