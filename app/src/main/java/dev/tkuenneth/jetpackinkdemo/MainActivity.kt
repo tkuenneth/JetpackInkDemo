@@ -19,9 +19,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -134,16 +136,19 @@ fun MainScreen(colors: Map<Color, String>) {
                                 }
                             )
                         }
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.pen)) },
-                            onClick = {
+                        HorizontalDivider()
+                        CheckboxDropdownMenuItem(
+                            text = stringResource(R.string.pen),
+                            checked = brushFamily == BrushFamily.Pen,
+                            onCheckedChange = {
                                 brushFamily = BrushFamily.Pen
                                 showMenu = false
                             },
                         )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.highlighter)) },
-                            onClick = {
+                        CheckboxDropdownMenuItem(
+                            text = stringResource(R.string.highlighter),
+                            checked = brushFamily == BrushFamily.Highlighter,
+                            onCheckedChange = {
                                 brushFamily = BrushFamily.Highlighter
                                 showMenu = false
                             },
@@ -306,6 +311,31 @@ fun ColorSelector(
                         else Modifier
                     )
             )
+        }
+    )
+}
+
+@Composable
+fun CheckboxDropdownMenuItem(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        modifier = modifier,
+        enabled = enabled,
+        leadingIcon = {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled
+            )
+        },
+        onClick = {
+            onCheckedChange(!checked)
         }
     )
 }
