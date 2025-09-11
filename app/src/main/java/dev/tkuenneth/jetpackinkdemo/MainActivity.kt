@@ -14,9 +14,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,7 +61,12 @@ class MainActivity : ComponentActivity(), InProgressStrokesFinishedListener {
             MaterialTheme(
                 colorScheme = defaultColorScheme()
             ) {
-                MainScreen()
+                val colors = mapOf(
+                    Color.Green to stringResource(R.string.green),
+                    Color.Red to stringResource(R.string.red),
+                    Color.Yellow to stringResource(R.string.yellow)
+                )
+                MainScreen(colors = colors)
             }
         }
     }
@@ -65,10 +74,10 @@ class MainActivity : ComponentActivity(), InProgressStrokesFinishedListener {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(colors: Map<Color, String>) {
     val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
-    val colors = listOf(Color.Green, Color.Red, Color.Yellow)
-    var currentColor by remember { mutableStateOf(colors[0]) }
+    var showMenu by remember { mutableStateOf(false) }
+    var currentColor by remember { mutableStateOf(colors.keys.first()) }
     val brush = remember(currentColor) {
         Brush.createWithColorIntArgb(
             family = StockBrushes.pressurePenLatest,
@@ -83,12 +92,6 @@ fun MainScreen() {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    colors.forEach { color ->
-                        ColorSelector(
-                            color = color,
-                            selected = color == currentColor,
-                        ) { currentColor = color }
-                    }
                     IconButton(
                         enabled = finishedStrokes.isNotEmpty(),
                         onClick = { finishedStrokes.clear() }) {
@@ -96,6 +99,29 @@ fun MainScreen() {
                             imageVector = Icons.Default.Clear,
                             contentDescription = stringResource(R.string.clear)
                         )
+                    }
+                    IconButton(
+                        onClick = { showMenu = !showMenu }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.more_options)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        colors.forEach { (color, name) ->
+                            ColorSelector(
+                                color = color,
+                                name = name,
+                                selected = color == currentColor,
+                                onColorSelected = {
+                                    currentColor = it
+                                    showMenu = false
+                                }
+                            )
+                        }
                     }
                 },
             )
@@ -232,26 +258,28 @@ fun FinishedStrokes(
 @Composable
 fun ColorSelector(
     color: Color,
+    name: String,
     selected: Boolean,
     onColorSelected: (Color) -> Unit
 ) {
-    IconButton(onClick = { onColorSelected(color) }) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = color,
-                    shape = CircleShape,
-                )
-                .then(
-                    if (selected) Modifier
-                        .border(
-                            width = 2.dp,
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    else Modifier
-                )
-        )
-    }
+    DropdownMenuItem(
+        text = { Text(name) },
+        onClick = { onColorSelected(color) },
+        leadingIcon = {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(color, CircleShape)
+                    .then(
+                        if (selected) Modifier
+                            .border(
+                                width = 2.dp,
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        else Modifier
+                    )
+            )
+        }
+    )
 }
