@@ -6,4 +6,7 @@
     <string name="red">Red</string>
     <string name="yellow">Yellow</string>
     <string name="green">Green</string>
+
+    <string name="free">Free</string>
+    <string name="circle">Circle</string>
 </resources>

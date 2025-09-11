@@ -51,21 +51,23 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
 
-class MainActivity : ComponentActivity(), InProgressStrokesFinishedListener {
+enum class DrawingMode { Free, Circle }
+
+class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val colors = mapOf(
+                Color.Green to stringResource(R.string.green),
+                Color.Red to stringResource(R.string.red),
+                Color.Yellow to stringResource(R.string.yellow)
+            )
             MaterialTheme(
                 colorScheme = defaultColorScheme()
             ) {
-                val colors = mapOf(
-                    Color.Green to stringResource(R.string.green),
-                    Color.Red to stringResource(R.string.red),
-                    Color.Yellow to stringResource(R.string.yellow)
-                )
                 MainScreen(colors = colors)
             }
         }
@@ -78,6 +80,7 @@ fun MainScreen(colors: Map<Color, String>) {
     val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
     var showMenu by remember { mutableStateOf(false) }
     var currentColor by remember { mutableStateOf(colors.keys.first()) }
+    var drawingMode by remember { mutableStateOf(DrawingMode.Free) }
     val brush = remember(currentColor) {
         Brush.createWithColorIntArgb(
             family = StockBrushes.pressurePenLatest,
@@ -122,6 +125,14 @@ fun MainScreen(colors: Map<Color, String>) {
                                 }
                             )
                         }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.free)) },
+                            onClick = { drawingMode = DrawingMode.Free },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.circle)) },
+                            onClick = { drawingMode = DrawingMode.Circle },
+                        )
                     }
                 },
             )
@@ -131,6 +142,7 @@ fun MainScreen(colors: Map<Color, String>) {
             DrawingSurface(
                 finishedStrokes = finishedStrokes.values,
                 brush = brush,
+                drawingMode = drawingMode,
             ) { strokes ->
                 finishedStrokes.putAll(strokes)
             }
@@ -143,11 +155,13 @@ fun MainScreen(colors: Map<Color, String>) {
 fun DrawingSurface(
     finishedStrokes: Collection<Stroke>,
     brush: Brush,
+    drawingMode: DrawingMode,
     modifier: Modifier = Modifier,
     addStrokes: (Map<InProgressStrokeId, Stroke>) -> Unit
 ) {
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
+    val latestDrawingMode by rememberUpdatedState(drawingMode)
     var currentPointerId by remember { mutableStateOf<Int?>(null) }
     var currentStrokeId by remember { mutableStateOf<InProgressStrokeId?>(null) }
     AndroidView(
@@ -156,7 +170,11 @@ fun DrawingSurface(
             InProgressStrokesView(context).apply {
                 addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                        addStrokes(strokes)
+                        if (latestDrawingMode == DrawingMode.Circle) {
+                            addStrokes(strokes)
+                        } else {
+                            addStrokes(strokes)
+                        }
                         removeFinishedStrokes(strokes.keys)
                     }
                 })
