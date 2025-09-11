@@ -51,7 +51,7 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
 
-enum class DrawingMode { Free, Circle }
+enum class BrushFamily { Pen, Highlighter }
 
 class MainActivity : ComponentActivity() {
 
@@ -80,12 +80,21 @@ fun MainScreen(colors: Map<Color, String>) {
     val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
     var showMenu by remember { mutableStateOf(false) }
     var currentColor by remember { mutableStateOf(colors.keys.first()) }
-    var drawingMode by remember { mutableStateOf(DrawingMode.Free) }
-    val brush = remember(currentColor) {
+    var brushFamily by remember { mutableStateOf(BrushFamily.Pen) }
+    val brush = remember(currentColor, brushFamily) {
         Brush.createWithColorIntArgb(
-            family = StockBrushes.pressurePenLatest,
-            colorIntArgb = currentColor.toArgb(),
-            size = 5F,
+            family = when (brushFamily) {
+                BrushFamily.Pen -> StockBrushes.pressurePenLatest
+                BrushFamily.Highlighter -> StockBrushes.highlighterLatest
+            },
+            colorIntArgb = when (brushFamily) {
+                BrushFamily.Pen -> currentColor.toArgb()
+                BrushFamily.Highlighter -> currentColor.copy(alpha = 0.4F).toArgb()
+            },
+            size = when (brushFamily) {
+                BrushFamily.Pen -> 5F
+                BrushFamily.Highlighter -> 55F
+            },
             epsilon = 0.1F
         )
     }
@@ -126,12 +135,18 @@ fun MainScreen(colors: Map<Color, String>) {
                             )
                         }
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.free)) },
-                            onClick = { drawingMode = DrawingMode.Free },
+                            text = { Text(stringResource(R.string.pen)) },
+                            onClick = {
+                                brushFamily = BrushFamily.Pen
+                                showMenu = false
+                            },
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.circle)) },
-                            onClick = { drawingMode = DrawingMode.Circle },
+                            text = { Text(stringResource(R.string.highlighter)) },
+                            onClick = {
+                                brushFamily = BrushFamily.Highlighter
+                                showMenu = false
+                            },
                         )
                     }
                 },
@@ -142,7 +157,6 @@ fun MainScreen(colors: Map<Color, String>) {
             DrawingSurface(
                 finishedStrokes = finishedStrokes.values,
                 brush = brush,
-                drawingMode = drawingMode,
             ) { strokes ->
                 finishedStrokes.putAll(strokes)
             }
@@ -155,13 +169,11 @@ fun MainScreen(colors: Map<Color, String>) {
 fun DrawingSurface(
     finishedStrokes: Collection<Stroke>,
     brush: Brush,
-    drawingMode: DrawingMode,
     modifier: Modifier = Modifier,
     addStrokes: (Map<InProgressStrokeId, Stroke>) -> Unit
 ) {
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
-    val latestDrawingMode by rememberUpdatedState(drawingMode)
     var currentPointerId by remember { mutableStateOf<Int?>(null) }
     var currentStrokeId by remember { mutableStateOf<InProgressStrokeId?>(null) }
     AndroidView(
@@ -170,11 +182,7 @@ fun DrawingSurface(
             InProgressStrokesView(context).apply {
                 addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                        if (latestDrawingMode == DrawingMode.Circle) {
-                            addStrokes(strokes)
-                        } else {
-                            addStrokes(strokes)
-                        }
+                        addStrokes(strokes)
                         removeFinishedStrokes(strokes.keys)
                     }
                 })
