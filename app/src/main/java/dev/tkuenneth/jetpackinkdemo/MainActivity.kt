@@ -273,8 +273,9 @@ fun FinishedStrokes(
     finishedStrokes: Collection<Stroke>,
     canvasStrokeRenderer: CanvasStrokeRenderer
 ) {
+    val canvasTransform = remember { Matrix() }
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val canvasTransform = Matrix()
+        // This is a no-op as canvasTransform is an identity matrix.
         drawContext.canvas.nativeCanvas.concat(canvasTransform)
         finishedStrokes.forEach { stroke ->
             canvasStrokeRenderer.draw(
