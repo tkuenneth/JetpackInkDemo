@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val colors = mapOf(
+                Color.Blue to stringResource(R.string.blue),
                 Color.Green to stringResource(R.string.green),
                 Color.Red to stringResource(R.string.red),
                 Color.Yellow to stringResource(R.string.yellow)
