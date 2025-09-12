@@ -32,7 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(colors: Map<Color, String>) {
-    val finishedStrokes = remember { mutableStateMapOf<InProgressStrokeId, Stroke>() }
+    val finishedStrokes = remember { mutableStateListOf<Stroke>() }
     var showMenu by remember { mutableStateOf(false) }
     var currentColor by remember { mutableStateOf(colors.keys.first()) }
     var brushFamily by remember { mutableStateOf(BrushFamily.Pen) }
@@ -161,10 +161,10 @@ fun MainScreen(colors: Map<Color, String>) {
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             DrawingSurface(
-                finishedStrokes = finishedStrokes.values,
+                finishedStrokes = finishedStrokes,
                 brush = brush,
             ) { strokes ->
-                finishedStrokes.putAll(strokes)
+                finishedStrokes.addAll(strokes)
             }
         }
     }
@@ -176,7 +176,7 @@ fun DrawingSurface(
     finishedStrokes: Collection<Stroke>,
     brush: Brush,
     modifier: Modifier = Modifier,
-    addStrokes: (Map<InProgressStrokeId, Stroke>) -> Unit
+    addStrokes: (Collection<Stroke>) -> Unit
 ) {
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
@@ -188,7 +188,7 @@ fun DrawingSurface(
             InProgressStrokesView(context).apply {
                 addFinishedStrokesListener(object : InProgressStrokesFinishedListener {
                     override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                        addStrokes(strokes)
+                        addStrokes(strokes.values)
                         removeFinishedStrokes(strokes.keys)
                     }
                 })
