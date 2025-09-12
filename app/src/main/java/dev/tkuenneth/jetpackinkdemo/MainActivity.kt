@@ -36,6 +36,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -80,7 +82,20 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(colors: Map<Color, String>) {
-    val finishedStrokes = remember { mutableStateListOf<Stroke>() }
+    val finishedStrokes = rememberSaveable(
+        saver = with(SerializationHelper()) {
+            Saver(
+                save = { strokes ->
+                    ArrayList(serializeStrokes(strokes))
+                },
+                restore = { strokes ->
+                    mutableStateListOf<Stroke>().apply {
+                        addAll(deserializeStrokes(strokes))
+                    }
+                }
+            )
+        }
+    ) { mutableStateListOf<Stroke>() }
     var showMenu by remember { mutableStateOf(false) }
     var currentColor by remember { mutableStateOf(colors.keys.first()) }
     var brushFamily by remember { mutableStateOf(BrushFamily.Pen) }
