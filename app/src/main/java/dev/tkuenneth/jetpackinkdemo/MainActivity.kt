@@ -9,19 +9,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,7 +38,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.authoring.InProgressStrokeId
 import androidx.ink.authoring.InProgressStrokesFinishedListener
@@ -156,19 +149,17 @@ fun MainScreen(colors: Map<Color, String>) {
                         CheckboxDropdownMenuItem(
                             text = stringResource(R.string.pen),
                             checked = brushFamily == BrushFamily.Pen,
-                            onCheckedChange = {
-                                brushFamily = BrushFamily.Pen
-                                showMenu = false
-                            },
-                        )
+                        ) {
+                            brushFamily = BrushFamily.Pen
+                            showMenu = false
+                        }
                         CheckboxDropdownMenuItem(
                             text = stringResource(R.string.highlighter),
                             checked = brushFamily == BrushFamily.Highlighter,
-                            onCheckedChange = {
-                                brushFamily = BrushFamily.Highlighter
-                                showMenu = false
-                            },
-                        )
+                        ) {
+                            brushFamily = BrushFamily.Highlighter
+                            showMenu = false
+                        }
                     }
                 },
             )
@@ -301,58 +292,4 @@ fun FinishedStrokes(
             )
         }
     }
-}
-
-@Composable
-fun ColorSelector(
-    color: Color,
-    name: String,
-    selected: Boolean,
-    onColorSelected: (Color) -> Unit
-) {
-    DropdownMenuItem(
-        text = { Text(name) },
-        onClick = { onColorSelected(color) },
-        leadingIcon = {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .background(color, CircleShape)
-                    .then(
-                        if (selected) Modifier
-                            .border(
-                                width = 2.dp,
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        else Modifier
-                    )
-            )
-        }
-    )
-}
-
-@Composable
-fun CheckboxDropdownMenuItem(
-    text: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true
-) {
-    DropdownMenuItem(
-        text = { Text(text) },
-        modifier = modifier,
-        enabled = enabled,
-        leadingIcon = {
-            Checkbox(
-                checked = checked,
-                onCheckedChange = null,
-                enabled = enabled
-            )
-        },
-        onClick = {
-            onCheckedChange(!checked)
-        }
-    )
 }
