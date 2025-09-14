@@ -22,6 +22,18 @@ class InkingHandler(
         view.removeFinishedStrokes(strokes.keys)
     }
 
+    private fun invokeIfConditionsMet(
+        event: MotionEvent,
+        action: (strokeId: InProgressStrokeId) -> Unit
+    ) {
+        val pointerIdFromEvent = event.getPointerId(event.actionIndex)
+        currentStrokeId?.let {
+            if (pointerIdFromEvent == currentPointerId) {
+                action(it)
+            }
+        }
+    }
+
     fun handleMotionEvent(event: MotionEvent, latestBrush: Brush): Boolean {
         predictor.record(event)
         val predictedMotionEvent = predictor.predict()
@@ -55,24 +67,20 @@ class InkingHandler(
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    val pointerId = event.getPointerId(event.actionIndex)
-                    currentStrokeId?.let { localCurrentStrokeId ->
-                        if (pointerId == currentPointerId) {
-                            view.finishStroke(
-                                event, pointerId, localCurrentStrokeId
-                            )
-                        }
+                    invokeIfConditionsMet(event) { strokeId ->
+                        view.finishStroke(
+                            event,
+                            event.getPointerId(event.actionIndex),
+                            strokeId
+                        )
                     }
                     view.performClick()
                     true
                 }
 
                 MotionEvent.ACTION_CANCEL -> {
-                    val pointerId = event.getPointerId(event.actionIndex)
-                    currentStrokeId?.let { localCurrentStrokeId ->
-                        if (pointerId == currentPointerId) {
-                            view.cancelStroke(localCurrentStrokeId, event)
-                        }
+                    invokeIfConditionsMet(event) { strokeId ->
+                        view.cancelStroke(strokeId, event)
                     }
                     true
                 }

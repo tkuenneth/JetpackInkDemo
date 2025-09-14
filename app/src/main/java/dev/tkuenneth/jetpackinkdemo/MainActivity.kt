@@ -183,7 +183,8 @@ fun DrawingSurface(
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
     var inkingHandlerInstance by remember { mutableStateOf<InkingHandler?>(null) }
-    AndroidView(modifier = modifier.fillMaxSize(),
+    AndroidView(
+        modifier = modifier.fillMaxSize(),
         factory = { context ->
             val view = InProgressStrokesView(context)
             val handler = InkingHandler(view, addStrokes).also {
