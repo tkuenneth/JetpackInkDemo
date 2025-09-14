@@ -44,16 +44,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val colors = mapOf(
-                Color.Blue to stringResource(R.string.blue),
-                Color.Green to stringResource(R.string.green),
-                Color.Red to stringResource(R.string.red),
-                Color.Yellow to stringResource(R.string.yellow)
-            )
             MaterialTheme(
                 colorScheme = defaultColorScheme()
             ) {
-                MainScreen(colors = colors)
+                MainScreen(
+                    colors = listOf(
+                        Color.Blue, Color.Green, Color.Red, Color.Yellow
+                    )
+                )
             }
         }
     }
@@ -61,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(colors: Map<Color, String>) {
+fun MainScreen(colors: List<Color>) {
     val finishedStrokes = rememberSaveable(
         saver = with(SerializationHelper()) {
             Saver(
@@ -76,7 +74,7 @@ fun MainScreen(colors: Map<Color, String>) {
             )
         }
     ) { mutableStateListOf<Stroke>() }
-    var currentColor by remember { mutableStateOf(colors.keys.first()) }
+    var currentColor by remember { mutableStateOf(colors.first()) }
     var brushFamily by remember { mutableStateOf(BrushFamily.Pen) }
     val brush = remember(currentColor, brushFamily) {
         Brush.createWithColorIntArgb(

@@ -12,15 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 
 @Composable
 fun ColorSelector(
     color: Color,
-    name: String,
     selected: Boolean,
     onColorSelected: (Color) -> Unit
 ) {
@@ -31,7 +28,6 @@ fun ColorSelector(
             .clickable {
                 onColorSelected(color)
             }
-            .semantics { contentDescription = name }
             .then(
                 if (selected) Modifier
                     .border(
@@ -45,14 +41,13 @@ fun ColorSelector(
 }
 
 @Composable
-fun Colors(colors: Map<Color, String>, currentColor: Color, onColorSelected: (Color) -> Unit) {
+fun Colors(colors: List<Color>, currentColor: Color, onColorSelected: (Color) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        colors.forEach { (color, name) ->
+        colors.forEach { color ->
             ColorSelector(
                 color = color,
-                name = name,
                 selected = color == currentColor,
                 onColorSelected = onColorSelected
             )
