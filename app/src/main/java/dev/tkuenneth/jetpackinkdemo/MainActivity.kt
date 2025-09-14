@@ -3,7 +3,6 @@ package dev.tkuenneth.jetpackinkdemo
 import android.annotation.SuppressLint
 import android.graphics.Matrix
 import android.os.Bundle
-import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -183,22 +182,31 @@ fun DrawingSurface(
 ) {
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val latestBrush by rememberUpdatedState(brush)
-    AndroidView(
-        modifier = modifier.fillMaxSize(),
+    var inkingHandlerInstance by remember { mutableStateOf<InkingHandler?>(null) }
+    AndroidView(modifier = modifier.fillMaxSize(),
         factory = { context ->
-            InProgressStrokesView(context).apply {
-                val inkingHandler = InkingHandler(this, addStrokes)
-                addFinishedStrokesListener(inkingHandler)
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                )
-                setOnTouchListener { _, event ->
-                    inkingHandler.handleMotionEvent(event, latestBrush)
-                }
-                eagerInit()
+            val view = InProgressStrokesView(context)
+            val handler = InkingHandler(view, addStrokes).also {
+                inkingHandlerInstance = it
             }
+            view.addFinishedStrokesListener(handler)
+            view.layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            )
+            view.setOnTouchListener { _, event ->
+                handler.handleMotionEvent(event, latestBrush)
+            }
+            view.eagerInit()
+            view
         },
+        onRelease = { view ->
+            view.setOnTouchListener(null)
+            inkingHandlerInstance?.let { handler ->
+                view.removeFinishedStrokesListener(handler)
+            }
+            inkingHandlerInstance = null
+        }
     )
     FinishedStrokes(
         finishedStrokes = finishedStrokes,
