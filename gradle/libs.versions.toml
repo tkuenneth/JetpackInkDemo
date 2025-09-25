@@ -35,6 +35,7 @@ androidx-ink-geometry = { module = "androidx.ink:ink-geometry", version.ref = "i
 androidx-ink-nativeloader = { module = "androidx.ink:ink-nativeloader", version.ref = "inkVersion" }
 androidx-ink-rendering = { module = "androidx.ink:ink-rendering", version.ref = "inkVersion" }
 androidx-ink-strokes = { group = "androidx.ink", name = "ink-strokes", version.ref = "inkVersion" }
+androidx-ink-storage = { group = "androidx.ink", name = "ink-storage", version.ref = "inkVersion" }
 androidx-input-motionprediction = { group = "androidx.input", name = "input-motionprediction", version.ref = "inputMotionprediction" }
 
 [plugins]

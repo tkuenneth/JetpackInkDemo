@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.ink.nativeloader)
     implementation(libs.androidx.ink.rendering)
     implementation(libs.androidx.ink.strokes)
+    implementation(libs.androidx.ink.storage)
     implementation(libs.androidx.input.motionprediction)
 
     implementation(libs.androidx.core.ktx)

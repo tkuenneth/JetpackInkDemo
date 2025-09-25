@@ -2,13 +2,12 @@ package dev.tkuenneth.jetpackinkdemo
 
 import android.os.Bundle
 import androidx.ink.brush.Brush
-import androidx.ink.brush.InputToolType
 import androidx.ink.brush.StockBrushes
-import androidx.ink.strokes.MutableStrokeInputBatch
+import androidx.ink.storage.StrokeInputBatchSerialization
 import androidx.ink.strokes.Stroke
-import androidx.ink.strokes.StrokeInput
 import androidx.ink.strokes.StrokeInputBatch
-
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class SerializationHelper {
 
@@ -33,38 +32,10 @@ class SerializationHelper {
         )
     }
 
-    private fun serializeStrokeInputBatch(inputs: StrokeInputBatch): SerializedStrokeInputBatch {
-        val serializedInputs = mutableListOf<SerializedStrokeInput>()
-        val scratchInput = StrokeInput()
-
-        for (i in 0 until inputs.size) {
-            inputs.populate(i, scratchInput)
-            serializedInputs.add(
-                SerializedStrokeInput(
-                    x = scratchInput.x,
-                    y = scratchInput.y,
-                    timeMillis = scratchInput.elapsedTimeMillis.toFloat(),
-                    pressure = scratchInput.pressure,
-                    tiltRadians = scratchInput.tiltRadians,
-                    orientationRadians = scratchInput.orientationRadians,
-                    strokeUnitLengthCm = scratchInput.strokeUnitLengthCm,
-                )
-            )
-        }
-
-        val toolType =
-            when (inputs.getToolType()) {
-                InputToolType.STYLUS -> SerializedToolType.STYLUS
-                InputToolType.TOUCH -> SerializedToolType.TOUCH
-                InputToolType.MOUSE -> SerializedToolType.MOUSE
-                else -> SerializedToolType.UNKNOWN
-            }
-
-        return SerializedStrokeInputBatch(
-            toolType = toolType,
-            strokeUnitLengthCm = inputs.getStrokeUnitLengthCm(),
-            inputs = serializedInputs,
-        )
+    private fun serializeStrokeInputBatch(inputs: StrokeInputBatch): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        StrokeInputBatchSerialization.encode(inputs, outputStream)
+        return outputStream.toByteArray()
     }
 
     private fun deserializeBrush(serializedBrush: SerializedBrush): Brush {
@@ -78,33 +49,8 @@ class SerializationHelper {
         )
     }
 
-    private fun deserializeStrokeInputBatch(
-        serializedBatch: SerializedStrokeInputBatch
-    ): StrokeInputBatch {
-        val toolType =
-            when (serializedBatch.toolType) {
-                SerializedToolType.STYLUS -> InputToolType.STYLUS
-                SerializedToolType.TOUCH -> InputToolType.TOUCH
-                SerializedToolType.MOUSE -> InputToolType.MOUSE
-                else -> InputToolType.UNKNOWN
-            }
-
-        val batch = MutableStrokeInputBatch()
-
-        serializedBatch.inputs.forEach { input ->
-            batch.add(
-                type = toolType,
-                x = input.x,
-                y = input.y,
-                elapsedTimeMillis = input.timeMillis.toLong(),
-                pressure = input.pressure,
-                tiltRadians = input.tiltRadians,
-                orientationRadians = input.orientationRadians,
-            )
-        }
-
-        return batch
-    }
+    private fun deserializeStrokeInputBatch(serializedBatch: ByteArray): StrokeInputBatch =
+        StrokeInputBatchSerialization.decode(ByteArrayInputStream(serializedBatch))
 
     fun serializeStrokes(strokes: List<Stroke>): List<Bundle> {
         return mutableListOf<Bundle>().apply {
@@ -117,7 +63,7 @@ class SerializationHelper {
                     putLong("brushColor", brush.colorLong)
                     putFloat("brushEpsilon", brush.epsilon)
                     putInt("stockBrush", serializedBrush.stockBrush.ordinal)
-                    putSerializable("strokeInputs", serializedInputs)
+                    putByteArray("strokeInputs", serializedInputs)
                 })
             }
         }
@@ -134,11 +80,7 @@ class SerializationHelper {
                         stockBrush = SerializedStockBrush.entries[entity.getInt("stockBrush")]
                     )
 
-                entity.getSerializable(
-                    "strokeInputs",
-                    SerializedStrokeInputBatch::class.java
-                )?.let { serializedInputs ->
-
+                entity.getByteArray("strokeInputs")?.let { serializedInputs ->
                     val brush = deserializeBrush(serializedBrush)
                     val inputs = deserializeStrokeInputBatch(serializedInputs)
                     add(Stroke(brush = brush, inputs = inputs))
@@ -159,27 +101,4 @@ enum class SerializedStockBrush {
     MARKER_V1,
     PRESSURE_PEN_V1,
     HIGHLIGHTER_V1
-}
-
-data class SerializedStrokeInputBatch(
-    val toolType: SerializedToolType,
-    val strokeUnitLengthCm: Float,
-    val inputs: List<SerializedStrokeInput>
-) : java.io.Serializable
-
-data class SerializedStrokeInput(
-    val x: Float,
-    val y: Float,
-    val timeMillis: Float,
-    val pressure: Float,
-    val tiltRadians: Float,
-    val orientationRadians: Float,
-    val strokeUnitLengthCm: Float
-)
-
-enum class SerializedToolType {
-    STYLUS,
-    TOUCH,
-    MOUSE,
-    UNKNOWN
 }
