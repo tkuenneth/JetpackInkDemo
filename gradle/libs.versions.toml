@@ -30,6 +30,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appCompat" }
 
 androidx-ink-authoring = { module = "androidx.ink:ink-authoring", version.ref = "inkVersion" }
+androidx-ink-authoring-compose = { module = "androidx.ink:ink-authoring-compose", version.ref = "inkVersion" }
 androidx-ink-brush = { module = "androidx.ink:ink-brush", version.ref = "inkVersion" }
 androidx-ink-geometry = { module = "androidx.ink:ink-geometry", version.ref = "inkVersion" }
 androidx-ink-nativeloader = { module = "androidx.ink:ink-nativeloader", version.ref = "inkVersion" }
